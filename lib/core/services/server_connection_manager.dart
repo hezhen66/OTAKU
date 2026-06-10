@@ -26,7 +26,6 @@ class ServerConnectionManager {
   bool _isMonitoringNetwork = false;
   int _connectionDuration = 0;
   int _currentRetryCount = 0; // 当前重试次数
-  bool _isManualConnect = false; // 是否为手动连接
   Completer<bool>? _connectionCompleter; // 用于取消连接的 Completer
 
   static const int connectionTimeoutSeconds = 15;
@@ -74,10 +73,7 @@ class ServerConnectionManager {
     // 如果是手动连接，清空重试次数
     if (isManual) {
       _currentRetryCount = 0;
-      _isManualConnect = true;
       debugPrint('👤 手动连接，清空重试次数');
-    } else {
-      _isManualConnect = false;
     }
 
     // 创建 Completer 用于取消
@@ -246,7 +242,6 @@ class ServerConnectionManager {
     
     // 清空重试计数
     _currentRetryCount = 0;
-    _isManualConnect = false;
 
     batch(() {
       services.connectionState.isConnecting.value = false;
@@ -553,6 +548,5 @@ class ServerConnectionManager {
     }
     _connectionCompleter = null;
     _currentRetryCount = 0;
-    _isManualConnect = false;
   }
 }

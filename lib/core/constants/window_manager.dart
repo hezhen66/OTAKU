@@ -44,9 +44,9 @@ class WindowManagerUtils {
         }
       });
 
-      if (ServiceManager().startupState.startup.value) {
-        handleStartupSetting(true);
-      }
+      await handleStartupSetting(
+        ServiceManager().startupState.startup.value,
+      );
     }
   }
 }

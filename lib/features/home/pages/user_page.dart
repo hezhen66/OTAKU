@@ -33,15 +33,15 @@ class _UserPageState extends State<UserPage> {
                 _showTopology = !_showTopology;
               });
             },
-            child: Icon(_showTopology ? Icons.list : Icons.hub),
             tooltip: _showTopology ? '列表视图' : '拓扑图',
+            child: Icon(_showTopology ? Icons.list : Icons.hub),
           ),
           const SizedBox(height: 16),
           FloatingActionButton(
             heroTag: 'room_settings',
             onPressed: () => RoomSettingsSheet.show(context),
-            child: const Icon(Icons.bar_chart),
             tooltip: '房间设置',
+            child: const Icon(Icons.bar_chart),
           ),
         ],
       ),
@@ -87,7 +87,7 @@ class _UserPageState extends State<UserPage> {
                 Icon(
                   Icons.people_outline,
                   size: 64,
-                  color: colorScheme.primary.withOpacity(0.6),
+                  color: colorScheme.primary.withValues(alpha: 0.6),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -102,7 +102,7 @@ class _UserPageState extends State<UserPage> {
                 Text(
                   '当前没有其他玩家连接到房间',
                   style: TextStyle(
-                    color: colorScheme.onSurface.withOpacity(0.7),
+                    color: colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -292,8 +292,8 @@ class _PlayerListItemState extends State<PlayerListItem> {
           onTap: () {
             // 如果需要 onTap 功能，在这里实现
           },
-          splashColor: colorScheme.primary.withOpacity(0.3),
-          highlightColor: colorScheme.primary.withOpacity(0.1),
+          splashColor: colorScheme.primary.withValues(alpha: 0.3),
+          highlightColor: colorScheme.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
           child: Container(
             padding: const EdgeInsets.all(12),

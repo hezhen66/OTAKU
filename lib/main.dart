@@ -31,13 +31,6 @@ void main() async {
       await _initializeApp();
     },
     (error, stack) {
-      // 输出到控制台
-      print('\n=== 未捕获的错误 ===');
-      print('错误: $error');
-      print('堆栈跟踪:\n$stack');
-      print('==================\n');
-
-      // 记录到日志文件
       GlobalErrorHandler.logError(
         'Uncaught error in main zone',
         error: error,
@@ -83,7 +76,7 @@ Future<void> _initializeApp() async {
           env['SUDO_USER'] == null &&
           env['UID'] != '0') {
         FileLogger().error('Linux requires sudo privileges');
-        print('请使用 sudo 运行本程序！');
+        debugPrint('请使用 sudo 运行本程序！');
         exit(1);
       }
     }
@@ -137,13 +130,6 @@ Future<void> _initializeApp() async {
 
     _runApp();
   } catch (e, stack) {
-    // 输出到控制台
-    print('\n=== 应用初始化失败 ===');
-    print('错误: $e');
-    print('堆栈跟踪:\n$stack');
-    print('=====================\n');
-
-    // 记录到日志文件
     GlobalErrorHandler.logError(
       'Failed to initialize app',
       error: e,
@@ -181,10 +167,7 @@ Future<void> _initAppLinks() async {
     await registry.initialize();
     FileLogger().info('App links initialized');
   } catch (e, stack) {
-    // 输出到控制台
-    print('警告: App links 初始化失败 - $e');
-
-    // 记录到日志文件
+    FileLogger().warning('App links 初始化失败: $e');
     GlobalErrorHandler.logError(
       'Failed to initialize app links',
       error: e,

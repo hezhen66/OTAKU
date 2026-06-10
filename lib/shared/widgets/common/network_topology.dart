@@ -24,26 +24,31 @@ class NetworkTopologyView extends StatefulWidget {
 
 class _NetworkTopologyViewState extends State<NetworkTopologyView> {
   NodeFlowController<_NodeData, dynamic>? _controller;
-  int? _lastGraphSignature;
+  int? _lastStructureSignature;
   bool? _lastShouldAnimateConnections;
   DateTime? _lastGraphSyncAt;
+  DateTime? _lastMetricsSyncAt;
 
   static const double _localX = 120;
   static const double _targetX = 760;
   static const double _baseY = 80;
   static const double _rowGap = 130;
   static const Duration _reducedSyncInterval = Duration(seconds: 4);
+  static const Duration _metricsSyncInterval = Duration(seconds: 1);
 
   @override
   void initState() {
     super.initState();
     _syncGraph();
+    _syncMetrics(force: true);
   }
 
   @override
   void didUpdateWidget(NetworkTopologyView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final resumedFromBackground = oldWidget.isInBackground && !widget.isInBackground;
+    final resumedFromBackground =
+        oldWidget.isInBackground && !widget.isInBackground;
+    _syncMetrics(force: resumedFromBackground);
     _syncGraph(force: resumedFromBackground);
   }
 
@@ -70,10 +75,11 @@ class _NetworkTopologyViewState extends State<NetworkTopologyView> {
     }
 
     final localIp = ServiceManager().networkConfigState.ipv4.value;
-    final graphSignature = _calculateGraphSignature(widget.nodes, localIp);
+    final structureSignature =
+        _calculateStructureSignature(widget.nodes, localIp);
     final shouldAnimate = _shouldAnimateConnections;
     if (_controller != null &&
-        _lastGraphSignature == graphSignature &&
+        _lastStructureSignature == structureSignature &&
         _lastShouldAnimateConnections == shouldAnimate) {
       return;
     }
@@ -100,19 +106,57 @@ class _NetworkTopologyViewState extends State<NetworkTopologyView> {
         connections: model.connections.values.toList(),
         config: NodeFlowConfig(snapToGrid: false, minZoom: 0.3, maxZoom: 2.0),
       );
-      _lastGraphSignature = graphSignature;
+      _lastStructureSignature = structureSignature;
       _lastShouldAnimateConnections = shouldAnimate;
       _lastGraphSyncAt = DateTime.now();
       return;
     }
 
     _applyGraphDiff(model);
-    _lastGraphSignature = graphSignature;
+    _lastStructureSignature = structureSignature;
     _lastShouldAnimateConnections = shouldAnimate;
     _lastGraphSyncAt = DateTime.now();
   }
 
-  int _calculateGraphSignature(List<KVNodeInfo> nodes, String localIp) {
+  void _syncMetrics({bool force = false}) {
+    if (_controller == null) return;
+    if (!force &&
+        widget.reduceUpdates &&
+        _lastMetricsSyncAt != null &&
+        DateTime.now().difference(_lastMetricsSyncAt!) < _metricsSyncInterval) {
+      return;
+    }
+
+    final localIp = ServiceManager().networkConfigState.ipv4.value;
+    final model = _buildGraphModel(
+      widget.nodes,
+      localIp: localIp,
+      existingPositions: {},
+    );
+
+    final controller = _controller!;
+    for (final entry in model.nodes.entries) {
+      final existing = controller.getNode(entry.key);
+      if (existing != null) {
+        existing.data.updateFrom(entry.value.data);
+      }
+    }
+
+    for (final entry in model.connections.entries) {
+      final existing = controller.getConnection(entry.key);
+      if (existing != null) {
+        final desiredLabel = entry.value.label?.text;
+        final existingLabel = existing.label?.text;
+        if (desiredLabel != existingLabel) {
+          existing.label = entry.value.label;
+        }
+      }
+    }
+
+    _lastMetricsSyncAt = DateTime.now();
+  }
+
+  int _calculateStructureSignature(List<KVNodeInfo> nodes, String localIp) {
     var hash = Object.hash(nodes.length, localIp);
     for (final node in nodes) {
       var nodeHash = Object.hash(
@@ -120,7 +164,6 @@ class _NetworkTopologyViewState extends State<NetworkTopologyView> {
         node.hostname,
         node.ipv4,
         node.version,
-        node.latencyMs.toStringAsFixed(1),
         node.hops.length,
       );
 
@@ -130,7 +173,6 @@ class _NetworkTopologyViewState extends State<NetworkTopologyView> {
           hop.peerId,
           hop.targetIp,
           hop.nodeName,
-          hop.latencyMs.toStringAsFixed(1),
         );
       }
 
@@ -896,7 +938,7 @@ class _NetworkTopologyViewState extends State<NetworkTopologyView> {
         animationEffect: shouldAnimate ? ConnectionEffects.particles : null,
       ),
       connectionAnimationDuration:
-          shouldAnimate ? const Duration(seconds: 3) : Duration.zero,
+          shouldAnimate ? const Duration(seconds: 4) : const Duration(seconds: 1),
       gridTheme: GridTheme.light.copyWith(
         style: GridStyles.dots,
         size: 20,

@@ -2,7 +2,7 @@ name: astral
 description: 'astral'
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 
-version: 2.8.6
+version: 2.8.7
 
 
 environment:
@@ -48,7 +48,6 @@ dependencies:
   image_picker: ^1.1.2
   photo_view: ^0.15.0
   crypto: ^3.0.3
-  pointycastle: ^4.0.0
   file_picker: ^10.2.0
   easy_localization: ^3.0.7+1
   easy_localization_loader: ^2.0.2

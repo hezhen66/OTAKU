@@ -11,6 +11,7 @@ import 'package:astral/core/states/firewall_state.dart';
 import 'package:astral/core/states/app_settings_state.dart';
 import 'package:astral/core/repositories/app_settings_repository.dart';
 import 'package:astral/core/services/notification_service.dart';
+import 'package:astral/shared/utils/helpers/regex_patterns.dart';
 import 'package:astral/src/rust/api/hops.dart';
 
 /// 应用设置服务：协调多个State和AppSettingsRepository
@@ -67,9 +68,8 @@ class AppSettingsService {
     appSettingsState.updateEnableBannerCarousel(settings.enableBannerCarousel);
     appSettingsState.updateEnableConnectionNotification(settings.enableConnectionNotification);
     appSettingsState.updateReduceAnimationUpdates(settings.reduceAnimationUpdates);
-    // TODO: 临时注释以调试 SignalEffectException
-    // appSettingsState.updateAutoRetryOnFailure(settings.autoRetryOnFailure);
-    // appSettingsState.updateMaxRetryCount(settings.maxRetryCount);
+    appSettingsState.updateAutoRetryOnFailure(settings.autoRetryOnFailure);
+    appSettingsState.updateMaxRetryCount(settings.maxRetryCount);
     notificationState.setHasShownBannerTip(settings.hasShownBannerTip);
 
     windowState.setCloseMinimize(settings.closeMinimize);
@@ -134,6 +134,7 @@ class AppSettingsService {
   Future<void> setStartup(bool value) async {
     startupState.setStartup(value);
     await _repository.setStartup(value);
+    await handleStartupSetting(value);
   }
 
   Future<void> setStartupMinimize(bool value) async {

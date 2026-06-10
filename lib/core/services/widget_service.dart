@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:home_widget/home_widget.dart';
 import 'package:astral/core/services/service_manager.dart';
 import 'package:astral/core/services/server_connection_manager.dart';
-import 'package:astral/core/states/connection_state.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 import 'package:flutter/material.dart';
 
@@ -42,7 +41,7 @@ class WidgetService {
     if (!Platform.isAndroid) return;
 
     // 注册后台回调
-    HomeWidget.registerBackgroundCallback(backgroundCallback);
+    HomeWidget.registerInteractivityCallback(backgroundCallback);
 
     // 监听前台点击
     HomeWidget.widgetClicked.listen((Uri? uri) {

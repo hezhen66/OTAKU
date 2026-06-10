@@ -45,9 +45,9 @@ class QuickNetworkConfig extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               decoration: BoxDecoration(
-                color: colorScheme.surfaceVariant.withOpacity(0.3),
+                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
+                border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
               ),
               child: Row(
                 children: [
@@ -57,7 +57,7 @@ class QuickNetworkConfig extends StatelessWidget {
                       color:
                           disableP2p
                               ? colorScheme.primaryContainer
-                              : colorScheme.surfaceVariant,
+                              : colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
@@ -87,7 +87,7 @@ class QuickNetworkConfig extends StatelessWidget {
                           '禁用P2P直连，所有流量经服务器中转',
                           style: TextStyle(
                             fontSize: 12,
-                            color: colorScheme.onSurface.withOpacity(0.6),
+                            color: colorScheme.onSurface.withValues(alpha: 0.6),
                           ),
                         ),
                       ],
@@ -114,10 +114,10 @@ class QuickNetworkConfig extends StatelessWidget {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceVariant.withOpacity(0.3),
+                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: colorScheme.outline.withOpacity(0.2),
+                    color: colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Row(
@@ -127,7 +127,7 @@ class QuickNetworkConfig extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: enableUdpBroadcastRelay
                             ? colorScheme.primaryContainer
-                            : colorScheme.surfaceVariant,
+                            : colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -156,7 +156,7 @@ class QuickNetworkConfig extends StatelessWidget {
                             'Windows：将局域网 UDP 广播转发到虚拟网（通常需管理员权限）',
                             style: TextStyle(
                               fontSize: 12,
-                              color: colorScheme.onSurface.withOpacity(0.6),
+                              color: colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ],
@@ -181,10 +181,10 @@ class QuickNetworkConfig extends StatelessWidget {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceVariant.withOpacity(0.3),
+                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: colorScheme.outline.withOpacity(0.2),
+                    color: colorScheme.outline.withValues(alpha: 0.2),
                   ),
                 ),
                 child: Row(
@@ -195,7 +195,7 @@ class QuickNetworkConfig extends StatelessWidget {
                         color:
                             firewallStatus
                                 ? colorScheme.primaryContainer
-                                : colorScheme.surfaceVariant,
+                                : colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -227,7 +227,7 @@ class QuickNetworkConfig extends StatelessWidget {
                                 : LocaleKeys.firewall_disabled.tr(),
                             style: TextStyle(
                               fontSize: 12,
-                              color: colorScheme.onSurface.withOpacity(0.6),
+                              color: colorScheme.onSurface.withValues(alpha: 0.6),
                             ),
                           ),
                         ],

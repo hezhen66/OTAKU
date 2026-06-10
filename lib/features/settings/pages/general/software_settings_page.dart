@@ -52,10 +52,11 @@ class _SoftwareSettingsPageState
   Future<void> _requestNotificationPermission() async {
     try {
       final status = await Permission.notification.request();
-      if (!context.mounted) return;
+      if (!mounted) return;
 
       await _checkNotificationPermission();
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -70,7 +71,7 @@ class _SoftwareSettingsPageState
         _showNotificationPermissionDialog();
       }
     } catch (e) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(LocaleKeys.permission_notification_request_failed.tr()),
@@ -124,10 +125,11 @@ class _SoftwareSettingsPageState
   Future<void> _requestInstallPermission() async {
     try {
       final status = await Permission.requestInstallPackages.request();
-      if (!context.mounted) return;
+      if (!mounted) return;
 
       await _checkInstallPermission();
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -142,7 +144,7 @@ class _SoftwareSettingsPageState
         _showPermissionDialog();
       }
     } catch (e) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(LocaleKeys.permission_install_request_failed.tr()),

@@ -8,12 +8,10 @@ import 'package:astral/src/rust/api/multicast.dart';
 import 'package:astral/features/nat_test/pages/nat_test_page.dart';
 import 'package:astral/features/magic_wall/pages/magic_wall_page.dart';
 import 'package:astral/features/settings/pages/network/port_whitelist_page.dart';
-import 'package:astral/core/database/app_data.dart';
+import 'package:astral/core/app_s/file_logger.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:astral/shared/widgets/cards/minecraft_server_card.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
 
 /// 服务器配置
 class ServerConfig {
@@ -87,7 +85,7 @@ class _ExplorePageState extends State<ExplorePage> {
   // 从远程 URL 加载服务器列表
   Future<void> _loadServers() async {
     try {
-      print('🌐 正在从远程加载服务器列表...');
+      FileLogger().info('正在从远程加载服务器列表...');
 
       final response = await http
           .get(Uri.parse('https://astral.fan/servers.json'))
@@ -124,33 +122,13 @@ class _ExplorePageState extends State<ExplorePage> {
         });
       }
     } catch (e) {
-      print('❌ 加载服务器配置失败: $e');
+      FileLogger().warning('加载服务器配置失败: $e');
       if (mounted) {
         setState(() {
           _isLoadingServers = false;
         });
       }
     }
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        action: SnackBarAction(
-          label: '重试',
-          textColor: Colors.white,
-          onPressed: () {
-            setState(() {
-              _isLoadingServers = true;
-            });
-            _loadServers();
-          },
-        ),
-      ),
-    );
   }
 
   // 生成随机端口 (10000-60000)
@@ -203,8 +181,9 @@ class _ExplorePageState extends State<ExplorePage> {
         });
       }
 
-      print('✅ 已连接服务器: $serverKey -> 127.0.0.1:$localPort');
-      print('✅ 已启动组播广播');
+      FileLogger().info(
+        '已连接服务器: $serverKey -> 127.0.0.1:$localPort，已启动组播广播',
+      );
 
       // 显示连接成功弹窗
       if (mounted) {
@@ -266,7 +245,7 @@ class _ExplorePageState extends State<ExplorePage> {
         );
       }
     } catch (e) {
-      print('❌ 连接失败: $e');
+      FileLogger().warning('连接失败: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -294,9 +273,9 @@ class _ExplorePageState extends State<ExplorePage> {
         });
       }
 
-      print('✅ 已断开服务器: $serverKey');
+      FileLogger().info('已断开服务器: $serverKey');
     } catch (e) {
-      print('❌ 断开失败: $e');
+      FileLogger().warning('断开失败: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -395,30 +374,6 @@ class _ExplorePageState extends State<ExplorePage> {
                   ),
                 ),
                 const SizedBox(height: 32),
-
-                // 数据管理部分 - 临时禁用
-                // _buildSectionTitle(context, '数据管理'),
-                // const SizedBox(height: 12),
-                // _buildListTile(
-                //   context,
-                //   GameItem(
-                //     title: '导出配置',
-                //     subtitle: '导出所有配置数据到文件',
-                //     icon: Icons.upload_file,
-                //     onTap: _exportDatabase,
-                //   ),
-                // ),
-                // const SizedBox(height: 8),
-                // _buildListTile(
-                //   context,
-                //   GameItem(
-                //     title: '导入配置',
-                //     subtitle: '从文件导入配置数据',
-                //     icon: Icons.download,
-                //     onTap: _importDatabase,
-                //   ),
-                // ),
-                // const SizedBox(height: 32),
               ]),
             ),
           ),
@@ -470,139 +425,6 @@ class _ExplorePageState extends State<ExplorePage> {
       const SizedBox(height: 12),
       ...serverCards,
     ];
-  }
-
-  // 导出数据库
-  Future<void> _exportDatabase() async {
-    try {
-      // 获取导出路径
-      String? exportPath;
-
-      if (Platform.isAndroid) {
-        // Android 使用下载目录
-        final directory = await getExternalStorageDirectory();
-        exportPath = directory?.path;
-      } else {
-        // 其他平台使用文件选择器选择目录
-        exportPath = await FilePicker.platform.getDirectoryPath(
-          dialogTitle: '选择导出路径',
-        );
-      }
-
-      if (exportPath == null) return;
-
-      // 显示加载对话框
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder:
-              (context) => const Center(child: CircularProgressIndicator()),
-        );
-      }
-
-      // 执行导出
-      final filePath = await AppDatabase().exportDatabase(exportPath);
-
-      // 关闭加载对话框
-      if (mounted) Navigator.of(context).pop();
-
-      // 显示成功消息
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('导出成功: $filePath'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      // 关闭加载对话框
-      if (mounted) Navigator.of(context).pop();
-
-      // 显示错误消息
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('导出失败: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
-
-  // 导入数据库
-  Future<void> _importDatabase() async {
-    try {
-      // 选择导入文件
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['isar'],
-        dialogTitle: '选择导入文件',
-      );
-
-      if (result == null || result.files.single.path == null) return;
-
-      final filePath = result.files.single.path!;
-
-      // 显示确认对话框
-      if (mounted) {
-        final confirmed = await showDialog<bool>(
-          context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('确认导入'),
-                content: const Text('导入配置将替换当前所有数据，是否继续？'),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('取消'),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text('确认'),
-                  ),
-                ],
-              ),
-        );
-
-        if (confirmed != true) return;
-      }
-
-      // 显示加载对话框
-      if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder:
-              (context) => const Center(child: CircularProgressIndicator()),
-        );
-      }
-
-      // 执行导入（会自动调用 ServiceManager.reload()）
-      await AppDatabase().importDatabase(filePath);
-
-      // 关闭加载对话框
-      if (mounted) Navigator.of(context).pop();
-
-      // 显示成功消息
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('导入成功，配置已刷新'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      // 关闭加载对话框
-      if (mounted) Navigator.of(context).pop();
-
-      // 显示错误消息
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('导入失败: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
   }
 
   Widget _buildListTile(BuildContext context, GameItem item) {

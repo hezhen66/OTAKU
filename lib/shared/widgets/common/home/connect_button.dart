@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 import 'package:astral/core/models/room.dart';
@@ -26,7 +26,6 @@ class _ConnectButtonState extends State<ConnectButton>
       'https://astral.fan/quick-start/download-install/';
 
   late AnimationController _animationController;
-  double _progress = 0.0;
 
   @override
   void initState() {
@@ -344,7 +343,7 @@ class _ConnectButtonState extends State<ConnectButton>
                       height: 6,
                       margin: const EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceVariant,
+                        color: colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(3),
                       ),
                       child: TweenAnimationBuilder<double>(
@@ -355,8 +354,6 @@ class _ConnectButtonState extends State<ConnectButton>
                         duration: const Duration(seconds: 15), // 连接超时时间
                         curve: Curves.easeInOut,
                         builder: (context, value, _) {
-                          // 更新进度值
-                          _progress = value * 100;
                           return FractionallySizedBox(
                             widthFactor: value,
                             child: Container(
