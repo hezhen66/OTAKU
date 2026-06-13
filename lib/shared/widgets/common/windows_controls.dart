@@ -1,4 +1,6 @@
-﻿import 'package:astral/core/services/service_manager.dart';
+﻿import 'package:astral/app.dart';
+import 'package:astral/core/services/service_manager.dart';
+import 'package:astral/features/settings/pages/server_settings_page.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:window_manager/window_manager.dart';
@@ -42,6 +44,7 @@ class _WindowControlsState extends State<WindowControls>
     Menu trayMenu = Menu(
       items: [
         MenuItem(key: 'show_window', label: '显示主界面'),
+        MenuItem(key: 'pub_relay', label: 'Pub-Relay 添加公共中继'),
         MenuItem.separator(),
         MenuItem(key: 'exit', label: '退出'),
       ],
@@ -67,6 +70,12 @@ class _WindowControlsState extends State<WindowControls>
       case 'show_window':
         ServiceManager().uiState.setBackground(false);
         windowManager.show();
+      case 'pub_relay':
+        ServiceManager().uiState.setBackground(false);
+        windowManager.show();
+        globalNavKey.currentState?.push(
+          MaterialPageRoute(builder: (_) => const ServerSettingsPage()),
+        );
       case 'exit':
         exit(0);
     }

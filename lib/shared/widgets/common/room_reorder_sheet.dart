@@ -40,17 +40,27 @@ class RoomReorderSheet extends StatefulWidget {
       // PC端显示为对话框
       await showDialog(
         context: context,
+        barrierColor: const Color(0xFF0F141C).withValues(alpha: 0.25),
         builder:
-            (context) => Dialog(
-              child: SizedBox(
-                width: 400,
-                height: 600,
-                child: RoomReorderSheet(
-                  rooms: List.from(rooms),
-                  onReorder: (reorderedRooms) {
-                    services.room.reorderRooms(reorderedRooms);
-                    Navigator.of(context).pop();
-                  },
+            (context) => Material(
+              type: MaterialType.transparency,
+              child: Dialog(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                child: Container(
+                  width: 400,
+                  height: 600,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF141D2A).withValues(alpha: 0.88),
+                    border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.55), width: 1),
+                  ),
+                  child: RoomReorderSheet(
+                    rooms: List.from(rooms),
+                    onReorder: (reorderedRooms) {
+                      services.room.reorderRooms(reorderedRooms);
+                      Navigator.of(context).pop();
+                    },
+                  ),
                 ),
               ),
             ),

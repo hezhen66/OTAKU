@@ -7,6 +7,7 @@ pub use easytier::proto::api::instance::{PeerRoutePair, Route};
 pub use easytier::proto::common::NatType;
 use lazy_static::lazy_static;
 use serde_json::json;
+use std::sync::atomic::{AtomicU32, Ordering};
 use tokio::runtime::Runtime;
 pub use tokio::task::JoinHandle;
 use uuid::Uuid;
@@ -16,6 +17,28 @@ pub static DEFAULT_ET_DNS_ZONE: &str = "as.net.";
 lazy_static! {
     static ref RT: Runtime = Runtime::new().expect("failed to create tokio runtime");
     static ref MANAGER: NetworkInstanceManager = NetworkInstanceManager::new();
+}
+
+/// 当前房间最大人数（0 = 不限）
+static MAX_PLAYERS: AtomicU32 = AtomicU32::new(0);
+
+/// 当前活跃 peer 数量（由 handle_event 维护）
+static ACTIVE_PEER_COUNT: AtomicU32 = AtomicU32::new(0);
+
+/// 发送系统事件到 Flutter（UDP 9999）
+fn send_sys_event(event: &str) {
+    let msg = format!("__SYS__:{}", event);
+    let _ = send_udp_to_localhost(&msg);
+}
+
+/// 检查房间人数上限
+fn check_room_full() {
+    let max = MAX_PLAYERS.load(Ordering::SeqCst);
+    if max == 0 { return; }
+    let current = ACTIVE_PEER_COUNT.load(Ordering::SeqCst);
+    if current >= max {
+        send_sys_event("room_full");
+    }
 }
 
 fn parse_instance_id(instance_id: &str) -> Result<Uuid, String> {
@@ -59,14 +82,23 @@ pub fn handle_event(mut events: EventBusSubscriber) -> tokio::task::JoinHandle<(
             match events.recv().await {
                 Ok(e) => match e {
                     GlobalCtxEvent::PeerAdded(p) => {
+                        let current = ACTIVE_PEER_COUNT.fetch_add(1, Ordering::SeqCst) + 1;
                         let msg = format!("peer added. peer_id: {}", p);
                         println!("{}", msg);
                         let _ = send_udp_to_localhost(&msg);
+                        // 检查人数上限
+                        let max = MAX_PLAYERS.load(Ordering::SeqCst);
+                        if max > 0 && current > max {
+                            send_sys_event(&format!("room_full:count={}:max={}", current, max));
+                        }
                     }
                     GlobalCtxEvent::PeerRemoved(p) => {
+                        let _ = ACTIVE_PEER_COUNT.fetch_sub(1, Ordering::SeqCst);
                         let msg = format!("peer removed. peer_id: {}", p);
                         println!("{}", msg);
                         let _ = send_udp_to_localhost(&msg);
+                        // 通知 Dart 侧检查房主继承
+                        send_sys_event(&format!("peer_left:{}", p));
                     }
                     GlobalCtxEvent::PeerConnAdded(p) => {
                         let conn_info = peer_conn_info_to_string(p);
@@ -293,6 +325,7 @@ pub fn create_server_with_flags(
     forwards: Vec<Forward>,
     flag: FlagsC,
 ) -> JoinHandle<Result<String, String>> {
+    ACTIVE_PEER_COUNT.store(0, Ordering::SeqCst);
     RT.spawn(async move {
         let cfg = TomlConfigLoader::default();
 
@@ -407,7 +440,38 @@ pub fn create_server_with_flags(
     })
 }
 
+/// 设置房间最大人数（Dart 侧创建房间时调用）
+pub fn set_max_players(count: u32) {
+    MAX_PLAYERS.store(count, Ordering::SeqCst);
+}
+
+/// 踢出指定 peer（关闭其网络实例）
+pub fn kick_peer(instance_id: String, peer_name: String) -> Result<(), String> {
+    let msg = format!("__SYS__:kicked:by={}", peer_name);
+    let _ = send_udp_to_localhost(&msg);
+    // 尝试关闭该 peer 的实例
+    let id = parse_instance_id(&instance_id)?;
+    MANAGER
+        .delete_network_instance(vec![id])
+        .map_err(|e| format!("kick failed: {}", e))?;
+    Ok(())
+}
+
+/// 通过虚拟网向目标 peer 发送踢人通知
+/// target_ip 是被踢方的虚拟 IP（如 10.126.126.5）
+/// Easytier 虚拟网会自动路由到对端
+pub fn broadcast_kick(target_ip: String, peer_name: String) {
+    use std::net::UdpSocket;
+    let msg = format!("__SYS__:kicked:by={}", peer_name);
+    let addr = format!("{}:9999", target_ip);
+    if let Ok(socket) = UdpSocket::bind("0.0.0.0:0") {
+        let _ = socket.send_to(msg.as_bytes(), &addr);
+    }
+}
+
 pub fn close_server(instance_id: String) -> Result<(), String> {
+    // 踢人广播：在被踢方断开前发送通知
+    send_sys_event(&format!("kicked:by={}", instance_id));
     let id = parse_instance_id(&instance_id)?;
     MANAGER
         .delete_network_instance(vec![id])

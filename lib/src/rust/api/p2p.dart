@@ -64,6 +64,17 @@ Future<JoinHandleResultStringString> createServerWithFlags({
   flag: flag,
 );
 
+Future<void> broadcastKick({
+  required String targetIp,
+  required String peerName,
+}) => RustLib.instance.api.crateApiP2PBroadcastKick(
+  targetIp: targetIp,
+  peerName: peerName,
+);
+
+Future<void> setMaxPlayers({required int count}) =>
+    RustLib.instance.api.crateApiP2PSetMaxPlayers(count: count);
+
 Future<void> closeServer({required String instanceId}) =>
     RustLib.instance.api.crateApiP2PCloseServer(instanceId: instanceId);
 

@@ -1,15 +1,17 @@
 import 'dart:io';
 
-import 'package:astral/shared/utils/helpers/update_helper.dart';
+import 'package:astral/shared/utils/dialogs/add_room_dialog.dart';
 import 'package:astral/core/services/service_manager.dart';
-import 'package:astral/core/constants/small_window_adapter.dart';
+import 'package:astral/core/states/connection_state.dart' show CoState;
 import 'package:astral/features/home/pages/home_page.dart';
 import 'package:astral/features/rooms/pages/room_page.dart';
+import 'package:astral/features/rooms/pages/connected_room_page.dart';
 import 'package:astral/features/explore/pages/explore_page.dart';
 import 'package:astral/features/settings/pages/settings_main_page.dart';
-import 'package:astral/shared/widgets/navigation/bottom_nav.dart';
-import 'package:astral/shared/widgets/navigation/left_nav.dart';
-import 'package:astral/shared/widgets/common/status_bar.dart';
+import 'package:astral/shared/widgets/hud/hud_scaffold.dart';
+import 'package:astral/shared/widgets/hud/hud_toast.dart';
+import 'package:astral/shared/widgets/hud/snow_effect.dart';
+import 'package:astral/core/states/connection_state.dart' show SystemEventType;
 import 'package:flutter/material.dart';
 import 'package:astral/core/navigation.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -25,10 +27,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen>
-    with
-        SingleTickerProviderStateMixin,
-        WidgetsBindingObserver,
-        WindowListener {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver, WindowListener {
   @override
   void initState() {
     super.initState();
@@ -42,23 +41,7 @@ class _MainScreenState extends State<MainScreen>
       ServiceManager().uiState.updateScreenSplitWidth(screenWidth);
     });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (ServiceManager().updateState.autoCheckUpdate.value ||
-          ServiceManager().updateState.beta.value) {
-        final updateChecker = UpdateChecker(owner: 'ldoubil', repo: 'astral');
-        if (mounted) {
-          Future.delayed(const Duration(milliseconds: 1000), () {
-            if (mounted) {
-              updateChecker.checkForUpdates(
-                context,
-                showNoUpdateMessage: false,
-                showFailureMessage: false,
-              );
-            }
-          });
-        }
-      }
-    });
+    // 自动更新检查已禁用
   }
 
   @override
@@ -99,7 +82,6 @@ class _MainScreenState extends State<MainScreen>
 
     final mediaQuery = MediaQuery.of(context);
     final screenWidth = mediaQuery.size.width;
-
     ServiceManager().uiState.updateScreenSplitWidth(screenWidth);
 
     if (mounted) {
@@ -108,62 +90,36 @@ class _MainScreenState extends State<MainScreen>
   }
 
   @override
-  void onWindowMinimize() {
-    _setAppBackground(true);
-  }
+  void onWindowMinimize() => _setAppBackground(true);
 
   @override
-  void onWindowBlur() {
-    _setAppBackground(true);
-  }
+  void onWindowBlur() => _setAppBackground(true);
 
   @override
-  void onWindowRestore() {
-    _setAppBackground(false);
-  }
+  void onWindowRestore() => _setAppBackground(false);
 
   @override
-  void onWindowFocus() {
-    _setAppBackground(false);
-  }
-
-  List<NavigationItem> get navigationItems => [
-    NavigationItem(
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-      label: LocaleKeys.nav_home.tr(),
-      page: const HomePage(),
-    ),
-    NavigationItem(
-      icon: Icons.room_preferences_outlined,
-      activeIcon: Icons.room_preferences,
-      label: LocaleKeys.nav_room.tr(),
-      page: const RoomPage(),
-    ),
-    NavigationItem(
-      icon: Icons.explore_outlined,
-      activeIcon: Icons.explore,
-      label: '探索',
-      page: const ExplorePage(),
-    ),
-    NavigationItem(
-      icon: Icons.settings_outlined,
-      activeIcon: Icons.settings,
-      label: LocaleKeys.nav_settings.tr(),
-      page: const SettingsMainPage(),
-    ),
-  ];
-
-  List<Widget> get _pages => navigationItems.map((item) => item.page).toList();
+  void onWindowFocus() => _setAppBackground(false);
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final isSmallWindow = SmallWindowAdapter.shouldApplyAdapter(context);
-
     return Watch((context) {
+      final connState = ServiceManager().connectionState.connectionState.watch(context);
+      final isConnected = connState == CoState.connected;
       final currentIndex = ServiceManager().uiState.selectedIndex.value;
-      final itemCount = navigationItems.length;
+
+      final items = [
+        NavigationItem(icon: Icons.gamepad, activeIcon: Icons.gamepad, label: '主页', page: const HomePage()),
+        NavigationItem(icon: Icons.add_circle_outline, activeIcon: Icons.add_circle_outline, label: '创建房间',
+            page: const SizedBox.shrink(), onTap: () => showAddRoomDialog(context)),
+        NavigationItem(icon: Icons.explore_outlined, activeIcon: Icons.explore_outlined, label: '浏览房间', page: const RoomPage()),
+        if (isConnected)
+          NavigationItem(icon: Icons.link, activeIcon: Icons.link, label: '联机房间', page: const ConnectedRoomPage()),
+        NavigationItem(icon: Icons.build_outlined, activeIcon: Icons.build_outlined, label: '联机工具', page: const ExplorePage()),
+        NavigationItem(icon: Icons.settings_outlined, activeIcon: Icons.settings_outlined, label: '设置', page: const SettingsMainPage()),
+      ];
+      final pages = items.map((i) => i.page).toList();
+      final itemCount = items.length;
 
       if (currentIndex >= itemCount && itemCount > 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -173,54 +129,51 @@ class _MainScreenState extends State<MainScreen>
         });
       }
 
-      final safeIndex =
-          (currentIndex >= 0 && currentIndex < itemCount) ? currentIndex : 0;
+      final safeIndex = (currentIndex >= 0 && currentIndex < itemCount) ? currentIndex : 0;
 
-      return Scaffold(
-        appBar: isSmallWindow ? null : StatusBar(),
-        body: Row(
-          children: [
-            if (ServiceManager().uiState.isDesktop.value && !isSmallWindow)
-              LeftNav(items: navigationItems, colorScheme: colorScheme),
-            Expanded(
-              child: Column(
-                children: [
-                  if (isSmallWindow)
-                    Container(
-                      height: 36,
-                      color: colorScheme.primaryContainer.withValues(alpha: 0.4),
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        safeIndex < navigationItems.length
-                            ? navigationItems[safeIndex].label
-                            : '',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onPrimaryContainer,
-                        ),
-                      ),
-                    ),
-                  Expanded(
-                    child: IndexedStack(
-                      index: safeIndex,
-                      children: _pages,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      final showSnow = ServiceManager().uiState.isSnowEnabled.watch(context);
+      final sysEvent = ServiceManager().connectionState.systemEvent.watch(context);
+      // 系统事件 → Toast
+      if (sysEvent != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final e = sysEvent!;
+          switch (e.type) {
+            case SystemEventType.kicked:
+              final msg = e.message ?? '';
+              if (msg.startsWith('inherit:')) {
+                HudToast.hostTransferred(context, msg.substring(9));
+              } else {
+                HudToast.kicked(context, by: msg.isNotEmpty ? msg : null);
+              }
+            case SystemEventType.roomFull:
+              HudToast.roomFull(context);
+            case SystemEventType.disconnected:
+              HudToast.disconnected(context);
+            case SystemEventType.reconnecting:
+              HudToast.reconnecting(context);
+            case SystemEventType.reconnected:
+              HudToast.reconnected(context);
+          }
+          ServiceManager().connectionState.systemEvent.value = null; // 消费
+        });
+      }
+
+      return Stack(
+        children: [
+          HUDScaffold(
+            items: items,
+            currentIndex: safeIndex,
+            onTabChanged: (index) => ServiceManager().uiState.selectedIndex.value = index,
+            child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          switchInCurve: Curves.easeOut,
+          switchOutCurve: Curves.easeIn,
+          transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+          child: IndexedStack(key: ValueKey(safeIndex), index: safeIndex, children: pages),
         ),
-        bottomNavigationBar:
-            (ServiceManager().uiState.isDesktop.value && !isSmallWindow)
-                ? null
-                : BottomNav(
-                  navigationItems: navigationItems,
-                  colorScheme: colorScheme,
-                ),
-      );
+      ),
+      if (showSnow) const SnowEffect(),
+    ]);
     });
   }
 }

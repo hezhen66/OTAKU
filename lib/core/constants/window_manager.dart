@@ -16,9 +16,8 @@ class WindowManagerUtils {
       windowManager.setTitle(ServiceManager().appSettingsState.appName.value);
       // 定义窗口选项配置
       final windowOptions = WindowOptions(
-        size: Size(960, 540),
-        // 设置窗口最小大小为 300x300
-        minimumSize: Size(200, 300),
+        size: Size(1080, 636),
+        minimumSize: Size(906, 550),
         // 设置窗口居中显示
         center: true,
         // 设置窗口标题

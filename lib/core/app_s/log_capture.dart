@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:astral/core/services/service_manager.dart';
+import 'package:astral/core/states/connection_state.dart' show SystemEvent, SystemEventType;
 import 'package:astral/core/app_s/file_logger.dart';
 
 /// 日志捕获管理器 - 单例类
@@ -38,6 +39,11 @@ class LogCapture {
               try {
                 final logData = utf8.decode(datagram.data);
                 if (logData.isNotEmpty) {
+                  // 拦截系统事件 → Toast
+                  if (logData.startsWith('__SYS__:')) {
+                    _handleSysEvent(logData.substring(8));
+                    return;
+                  }
                   _addLogToSignal(
                     '[${DateTime.now().toString().substring(11, 19)}] $logData',
                   );
@@ -98,6 +104,63 @@ class LogCapture {
     final timestamp = DateTime.now().toString().substring(11, 19);
     final logEntry = '[$timestamp] [CONNECTION] $message';
     _addLogToSignal(logEntry);
+  }
+
+  /// 处理 Rust 侧发来的系统事件
+  void _handleSysEvent(String payload) {
+    final connState = ServiceManager().connectionState;
+    if (payload.startsWith('kicked:')) {
+      final by = payload.substring(7);
+      _addLogToSignal('[KICK] 玩家被踢出: $by');
+      connState.systemEvent.value = SystemEvent(SystemEventType.kicked, message: by);
+    } else if (payload.startsWith('room_full')) {
+      _addLogToSignal('[FULL] 房间已满，强制断开');
+      connState.systemEvent.value = const SystemEvent(SystemEventType.roomFull);
+      // 满员强制断开：把这个超限玩家踢回大厅
+      connState.systemEvent.value = const SystemEvent(SystemEventType.roomFull);
+    } else if (payload.startsWith('peer_left:')) {
+      final leftId = payload.substring(10);
+      _addLogToSignal('[LEAVE] Peer 离开: $leftId');
+      _handlePeerLeft(leftId);
+    } else {
+      // 其他系统事件记入日志
+      _addLogToSignal('[SYS] $payload');
+    }
+  }
+
+  /// 房主继承：如果离开的是 Host，转移给第一个存活 Peer
+  void _handlePeerLeft(String leftId) {
+    final ui = ServiceManager().uiState;
+    final conn = ServiceManager().connectionState;
+    final nodes = conn.netStatus.value?.nodes ?? [];
+    final hostIdx = ui.hostIndex.value;
+
+    // 检查离开的是否为当前 Host
+    final allPeers = nodes.where((n) {
+      final ct = (n.connType as String?) ?? '';
+      final ip = (n.ipv4 as String?) ?? '';
+      return ct != 'server' && ip != '0.0.0.0';
+    }).toList();
+
+    // 如果离开了的 peer index 等于 hostIndex，触发继承
+    if (hostIdx >= allPeers.length || allPeers.isEmpty) {
+      // Host 是最后一个，重置
+      ui.hostIndex.value = 0;
+      return;
+    }
+
+    // 简单继承：如果 host 不是索引 0，把第一个活着的 peer 设为新 host
+    if (hostIdx == 0 || allPeers.length == 1) {
+      ui.hostIndex.value = 0;
+      if (allPeers.isNotEmpty) {
+        final newHost = (allPeers.first.hostname as String?) ?? 'Unknown';
+        _addLogToSignal('[HOST] 房主离开，继承者: $newHost');
+        conn.systemEvent.value = SystemEvent(
+          SystemEventType.kicked,
+          message: 'inherit:$newHost',
+        );
+      }
+    }
   }
 
   /// 添加错误日志

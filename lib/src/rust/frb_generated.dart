@@ -132,6 +132,10 @@ abstract class RustLibApi extends BaseApi {
 
   Future<bool> crateApiUtilsCheckSudo();
 
+  Future<void> crateApiP2PBroadcastKick({required String targetIp, required String peerName});
+
+  Future<void> crateApiP2PSetMaxPlayers({required int count});
+
   Future<void> crateApiP2PCloseServer({required String instanceId});
 
   Future<void> crateApiSimpleCloseServer();
@@ -847,6 +851,56 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiUtilsCheckSudoConstMeta =>
       const TaskConstMeta(debugName: "check_sudo", argNames: []);
+
+  @override
+  Future<void> crateApiP2PBroadcastKick({
+    required String targetIp,
+    required String peerName,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(targetIp, serializer);
+          sse_encode_String(peerName, serializer);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 67, port: port_);
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiP2PBroadcastKickConstMeta,
+        argValues: [targetIp, peerName],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiP2PBroadcastKickConstMeta =>
+      const TaskConstMeta(debugName: "broadcast_kick", argNames: ["targetIp", "peerName"]);
+
+  @override
+  Future<void> crateApiP2PSetMaxPlayers({required int count}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_u_32(count, serializer);
+          pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 66, port: port_);
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiP2PSetMaxPlayersConstMeta,
+        argValues: [count],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiP2PSetMaxPlayersConstMeta =>
+      const TaskConstMeta(debugName: "set_max_players", argNames: ["count"]);
 
   @override
   Future<void> crateApiP2PCloseServer({required String instanceId}) {

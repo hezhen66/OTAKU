@@ -28,13 +28,16 @@ class UpdateChecker {
     this.branch = 'main',
   });
 
-  /// 检查更新
+  /// 检查更新（已禁用）
   Future<void> checkForUpdates(
     BuildContext context, {
     bool showNoUpdateMessage = true,
     bool forceShowDownload = false,
     bool showFailureMessage = true,
   }) async {
+    // 更新功能已禁用
+    return;
+    /* 原始逻辑保留
     try {
       final releaseInfo = await _fetchLatestRelease(
         includePrereleases: ServiceManager().updateState.beta.value,
@@ -118,7 +121,10 @@ class UpdateChecker {
     }
   }
 
-  /// 获取最新发布版本信息
+    */
+  }
+
+  /// 获取最新发布版本信息（已禁用）
   Future<Map<String, dynamic>?> _fetchLatestRelease({
     bool includePrereleases = false,
   }) async {

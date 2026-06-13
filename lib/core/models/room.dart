@@ -23,6 +23,13 @@ class Room {
   // 自定义参数（用于标识房间是否有自定义服务器，如为空则表示无自定义参数）
   String customParam = "";
 
+  // 最大人数
+  int maxPlayers = 0;
+
+  // 局域网模式（不使用公共服务器，不持久化）
+  @ignore
+  bool isLanMode = false;
+
   // ========== 网络配置携带 ==========
   /// 携带的网络配置 JSON（序列化的 NetworkConfigShare 对象）
   String networkConfigJson = "";
@@ -39,6 +46,7 @@ class Room {
     this.sortOrder = 0,
     this.servers = const [],
     this.customParam = "",
+    this.maxPlayers = 0,
     this.networkConfigJson = "",
   });
 }

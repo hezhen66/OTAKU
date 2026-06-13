@@ -3,6 +3,7 @@ import 'package:astral/src/rust/api/simple.dart';
 import 'package:astral/shared/widgets/cards/all_user_card.dart';
 import 'package:astral/shared/widgets/cards/mini_user_card.dart';
 import 'package:astral/shared/widgets/common/network_topology.dart';
+import 'package:astral/shared/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:astral/shared/widgets/common/room_settings_sheet.dart';
@@ -195,18 +196,13 @@ class _UserPageState extends State<UserPage> {
                     (context, index) {
                       // 获取当前索引对应的玩家数据
                       final player = filteredNodes[index];
-                      // 根据简单列表模式选项返回不同的卡片组件
-                      return userListSimple
-                          ? MiniUserCard(
-                            player: player,
-                            colorScheme: colorScheme,
-                            localIPv4: localIPv4,
-                          )
-                          : AllUserCard(
-                            player: player,
-                            colorScheme: colorScheme,
-                            localIPv4: localIPv4,
-                          );
+                      final Widget card = userListSimple
+                          ? MiniUserCard(player: player, colorScheme: colorScheme, localIPv4: localIPv4)
+                          : AllUserCard(player: player, colorScheme: colorScheme, localIPv4: localIPv4);
+                      return MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: card,
+                      );
                     },
                     // 设置子项数量为过滤后的节点数量
                     childCount: filteredNodes.length,
@@ -312,3 +308,4 @@ class _PlayerListItemState extends State<PlayerListItem> {
     );
   }
 }
+

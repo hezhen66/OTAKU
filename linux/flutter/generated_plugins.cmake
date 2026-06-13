@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   file_selector_linux
   flutter_localization
+  fvp
   gtk
   isar_community_flutter_libs
   open_file_linux
@@ -15,6 +16,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
+  jni
   rust_lib_astral
 )
 

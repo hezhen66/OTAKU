@@ -9,7 +9,13 @@ import 'package:astral/features/nat_test/pages/nat_test_page.dart';
 import 'package:astral/features/magic_wall/pages/magic_wall_page.dart';
 import 'package:astral/features/settings/pages/network/port_whitelist_page.dart';
 import 'package:astral/core/app_s/file_logger.dart';
+import 'package:astral/core/services/service_manager.dart';
+import 'package:astral/shared/theme/app_theme.dart';
+import 'package:astral/shared/widgets/hud/frosted_glass.dart';
+import 'package:astral/shared/widgets/common/home/servers_home.dart';
+import 'package:astral/shared/widgets/common/home/quick_network_config.dart';
 import 'package:flutter/material.dart';
+import 'package:signals_flutter/signals_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:astral/shared/widgets/cards/minecraft_server_card.dart';
 
@@ -299,6 +305,7 @@ class _ExplorePageState extends State<ExplorePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: CustomScrollView(
         slivers: [
           SliverPadding(
@@ -306,6 +313,12 @@ class _ExplorePageState extends State<ExplorePage> {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 ..._buildServerRecommendationSection(context),
+                const SizedBox(height: 16),
+                _buildCurrentServers(context),
+                const SizedBox(height: 24),
+                _buildSectionTitle(context, '网络配置'),
+                const SizedBox(height: 12),
+                const QuickNetworkConfig(),
                 const SizedBox(height: 32),
 
                 _buildSectionTitle(context, '联机工具'),
@@ -382,16 +395,20 @@ class _ExplorePageState extends State<ExplorePage> {
     );
   }
 
+  Widget _buildCurrentServers(BuildContext context) {
+    return Watch((context) {
+      final hasServers = ServiceManager().serverState.servers
+          .watch(context)
+          .any((s) => s.enable);
+      if (!hasServers) return const SizedBox.shrink();
+      return ServersHome();
+    });
+  }
+
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.only(left: 4.0, bottom: 8.0),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-      ),
+      padding: const EdgeInsets.only(left: 16, bottom: 8),
+      child: Text(title.toUpperCase(), style: AppTheme.hudBody(color: AppTheme.textSecondary)),
     );
   }
 
@@ -428,35 +445,17 @@ class _ExplorePageState extends State<ExplorePage> {
   }
 
   Widget _buildListTile(BuildContext context, GameItem item) {
-    return Card(
-      margin: EdgeInsets.zero,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 12,
-        ),
-        leading: Icon(
-          item.icon,
-          size: 24,
-          color: Theme.of(context).colorScheme.primary,
-        ),
-        title: Text(
-          item.title,
-          style: Theme.of(
-            context,
-          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
-        ),
-        subtitle: Text(
-          item.subtitle,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-        trailing: Icon(
-          Icons.chevron_right,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: FrostedGlassPanel(
+        padding: EdgeInsets.zero,
         onTap: item.onTap,
+        child: ListTile(
+          leading: Icon(item.icon, size: 24, color: AppTheme.primary),
+          title: Text(item.title, style: AppTheme.hudBody()),
+          subtitle: Text(item.subtitle, style: AppTheme.hudBody(fontSize: 12, color: AppTheme.textSecondary)),
+          trailing: Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+        ),
       ),
     );
   }

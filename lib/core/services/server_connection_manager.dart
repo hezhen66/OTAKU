@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:astral/core/builders/server_config_builder.dart';
 import 'package:astral/core/models/network_config_share.dart';
+import 'package:astral/core/states/connection_state.dart' show SystemEvent, SystemEventType;
 import 'package:astral/core/services/service_manager.dart';
 import 'package:astral/core/services/notification_service.dart';
 import 'package:astral/core/services/widget_service.dart';
 import 'package:astral/core/services/vpn_manager.dart';
 import 'package:astral/shared/utils/network/ip_utils.dart';
+import 'package:astral/core/models/room.dart';
+import 'package:astral/src/rust/api/p2p.dart' show setMaxPlayers;
 import 'package:astral/src/rust/api/simple.dart';
 import 'package:astral/src/rust/api/hops.dart';
 import 'package:flutter/foundation.dart';
@@ -26,6 +29,8 @@ class ServerConnectionManager {
   bool _isMonitoringNetwork = false;
   int _connectionDuration = 0;
   int _currentRetryCount = 0; // 当前重试次数
+  int _networkFailCount = 0; // 连续断网计数
+  bool _isReconnecting = false; // 重连中
   Completer<bool>? _connectionCompleter; // 用于取消连接的 Completer
 
   static const int connectionTimeoutSeconds = 15;
@@ -299,6 +304,11 @@ class ServerConnectionManager {
             .withFlags()
             .build();
 
+    // 同步房间人数上限到 Rust
+    if (room is Room && room.maxPlayers > 0) {
+      await setMaxPlayers(count: room.maxPlayers);
+    }
+
     // 调用Rust API创建服务器
     await createServer(
       username: config.username,
@@ -474,9 +484,48 @@ class ServerConnectionManager {
         final netStatus = await getNetworkStatus();
         batch(() {
           ServiceManager().connectionState.netStatus.value = netStatus;
+
+          // 检查房间人数上限（Dart 侧兜底）
+          final maxP = ServiceManager().uiState.maxPlayers.value;
+          if (maxP > 0) {
+            final nodes = netStatus.nodes.where((n) {
+              final ct = (n.connType as String?) ?? '';
+              return ct != 'server';
+            });
+            if (nodes.length > maxP) {
+              ServiceManager().connectionState.systemEvent.value =
+                  const SystemEvent(SystemEventType.roomFull);
+              // 强制断开：把这个超限玩家踢回大厅
+              disconnect();
+            }
+          }
         });
+        _networkFailCount = 0; // 成功，重置
+        // 如果之前在重连，表示恢复成功
+        if (_isReconnecting) {
+          _isReconnecting = false;
+          ServiceManager().connectionState.systemEvent.value =
+              const SystemEvent(SystemEventType.reconnected);
+        }
       } catch (_) {
-        // Notification updates should continue even if network stats fail.
+        _networkFailCount++;
+        final connected = ServiceManager().connectionState.connectionState.value ==
+            CoState.connected;
+
+        // 连续 3 次失败 → 进入重连
+        if (_networkFailCount == 3 && connected && !_isReconnecting) {
+          _isReconnecting = true;
+          ServiceManager().connectionState.systemEvent.value =
+              const SystemEvent(SystemEventType.reconnecting);
+        }
+
+        // 重连中持续失败超过 10 秒（总计 13 次）→ 彻底断开
+        if (_networkFailCount >= 13 && connected) {
+          _isReconnecting = false;
+          ServiceManager().connectionState.systemEvent.value =
+              const SystemEvent(SystemEventType.disconnected);
+          disconnect();
+        }
       }
 
       if (Platform.isAndroid &&

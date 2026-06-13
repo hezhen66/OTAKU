@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:fvp/fvp.dart' as fvp;
 import 'package:astral/src/rust/api/utils.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:astral/shared/utils/helpers/update_helper.dart';
@@ -66,6 +67,7 @@ Future<void> _initRustLib() async {
 Future<void> _initializeApp() async {
   try {
     await _initRustLib();
+    if (Platform.isWindows) fvp.registerWith();
     FileLogger().info('RustLib initialized');
     // initApp();
 
@@ -106,6 +108,11 @@ Future<void> _initializeApp() async {
     // 初始化贴片服务
     WidgetService.instance.initialize();
     FileLogger().info('WidgetService initialized');
+
+    // 恢复上次保存的背景
+    await ServiceManager().uiState.loadSavedBackground();
+    await ServiceManager().uiState.loadSnowEnabled();
+    FileLogger().info('Saved background loaded');
 
     try {
       await AppInfoUtil.init().timeout(const Duration(seconds: 3));

@@ -109,13 +109,14 @@ class _UserIpBoxState extends State<UserIpBox> {
           children: [
             Row(
               children: [
-                Icon(Icons.person, color: colorScheme.primary, size: 22),
+                Container(width: 3, height: 18, color: const Color(0xFF00E5FF)),
                 const SizedBox(width: 8),
                 Text(
                   LocaleKeys.user_info.tr(),
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
                   ),
                 ),
                 const Spacer(),
@@ -153,7 +154,7 @@ class _UserIpBoxState extends State<UserIpBox> {
               decoration: InputDecoration(
                 labelText: LocaleKeys.username.tr(),
                 hintText: LocaleKeys.username_hint.tr(),
-                border: const OutlineInputBorder(),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(2), borderSide: BorderSide(color: const Color(0xFF00E5FF).withValues(alpha: 0.3), width: 0.8)),
                 prefixIcon: Icon(Icons.person, color: colorScheme.primary),
                 floatingLabelBehavior: FloatingLabelBehavior.always,
                 contentPadding: const EdgeInsets.symmetric(
@@ -184,7 +185,7 @@ class _UserIpBoxState extends State<UserIpBox> {
                   ),
                   floatingLabelBehavior: FloatingLabelBehavior.always,
                   enabled: connectionState == CoState.idle,
-                  border: const OutlineInputBorder(),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(2), borderSide: BorderSide(color: const Color(0xFF00E5FF).withValues(alpha: 0.3), width: 0.8)),
                   prefixIcon: Icon(Icons.apartment, color: colorScheme.primary),
                   suffixIcon: Icon(Icons.menu, color: colorScheme.primary),
                 ),
@@ -233,7 +234,7 @@ class _UserIpBoxState extends State<UserIpBox> {
                         labelText: LocaleKeys.virtual_network_ip.tr(),
                         // 添加提示文本
                         hintText: LocaleKeys.virtual_network_ip_hint.tr(),
-                        border: const OutlineInputBorder(),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(2), borderSide: BorderSide(color: const Color(0xFF00E5FF).withValues(alpha: 0.3), width: 0.8)),
                         prefixIcon: Icon(Icons.lan, color: colorScheme.primary),
                         floatingLabelBehavior: FloatingLabelBehavior.always,
                         contentPadding: const EdgeInsets.symmetric(
@@ -253,6 +254,7 @@ class _UserIpBoxState extends State<UserIpBox> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Switch(
+                        overlayColor: WidgetStateProperty.all(Colors.transparent),
                         value: _services.networkConfigState.dhcp.value,
                         onChanged: (value) {
                           if (ServiceManager()

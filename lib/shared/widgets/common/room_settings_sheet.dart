@@ -16,14 +16,20 @@ class RoomSettingsSheet extends StatefulWidget {
       // PC端显示为对话框
       return showDialog(
         context: context,
+        barrierColor: const Color(0xFF030A10).withValues(alpha: 0.75),
         builder:
             (_) => Dialog(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 400,
-                  maxHeight: 600,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0B141C).withValues(alpha: 0.95),
+                  border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.55), width: 1),
                 ),
-                child: const RoomSettingsSheet(),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400, maxHeight: 600),
+                  child: const RoomSettingsSheet(),
+                ),
               ),
             ),
       );

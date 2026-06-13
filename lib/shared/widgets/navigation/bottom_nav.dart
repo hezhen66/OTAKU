@@ -1,5 +1,6 @@
-﻿import 'package:astral/core/services/service_manager.dart';
-import 'package:astral/core/constants/small_window_adapter.dart'; // 导入小窗口适配器
+import 'package:astral/shared/theme/app_theme.dart';
+import 'package:astral/core/services/service_manager.dart';
+import 'package:astral/core/constants/small_window_adapter.dart';
 import 'package:astral/core/navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:signals_flutter/signals_flutter.dart';
@@ -16,40 +17,43 @@ class BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 检查是否为小窗口模式
     final bool isSmallWindow = SmallWindowAdapter.shouldApplyAdapter(context);
 
     return Watch((context) {
       final selectedIndex = ServiceManager().uiState.selectedIndex.value;
 
-      return BottomNavigationBar(
-        backgroundColor: colorScheme.surfaceContainerLow,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: colorScheme.primary,
-        unselectedItemColor: colorScheme.onSurfaceVariant,
-        showUnselectedLabels: !isSmallWindow, // 在小窗口模式下不显示未选中的标签
-        selectedFontSize: isSmallWindow ? 10 : 12, // 在小窗口模式下使用更小的字体
-        unselectedFontSize: isSmallWindow ? 8 : 10,
-        items:
-            navigationItems
-                .map(
-                  (item) => BottomNavigationBarItem(
-                    icon: Icon(
-                      item.icon,
-                      size: isSmallWindow ? 20 : 24,
-                    ), // 在小窗口模式下使用更小的图标
-                    activeIcon: Icon(
-                      item.activeIcon,
-                      size: isSmallWindow ? 20 : 24,
-                    ),
-                    label: item.label,
-                  ),
-                )
-                .toList(),
-        currentIndex: selectedIndex,
-        onTap: (index) {
-          ServiceManager().uiState.selectedIndex.value = index;
-        },
+      return Container(
+        decoration: BoxDecoration(
+          color: AppTheme.bgPanel,
+          border: Border(top: BorderSide(color: AppTheme.glassBorder)),
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: AppTheme.bgPanel,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: AppTheme.primaryGlow,
+          unselectedItemColor: AppTheme.textSecondary,
+          showUnselectedLabels: !isSmallWindow,
+          selectedFontSize: isSmallWindow ? 10 : 12,
+          unselectedFontSize: isSmallWindow ? 8 : 10,
+          elevation: 0,
+          items: navigationItems
+              .map(
+                (item) => BottomNavigationBarItem(
+                  icon: Icon(item.icon, size: isSmallWindow ? 20 : 24),
+                  activeIcon: Icon(item.activeIcon, size: isSmallWindow ? 20 : 24),
+                  label: item.label,
+                ),
+              )
+              .toList(),
+          currentIndex: selectedIndex,
+          onTap: (index) {
+            if (navigationItems[index].onTap != null) {
+              navigationItems[index].onTap!();
+              return;
+            }
+            ServiceManager().uiState.selectedIndex.value = index;
+          },
+        ),
       );
     });
   }

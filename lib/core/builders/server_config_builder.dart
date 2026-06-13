@@ -1,3 +1,4 @@
+import 'package:astral/core/models/room.dart';
 import 'package:astral/core/models/server_mod.dart';
 import 'package:astral/core/models/network_config_share.dart';
 import 'package:astral/core/models/forwarding.dart';
@@ -112,6 +113,12 @@ class ServerConfigBuilder {
 
   /// 构建服务器URL列表
   ServerConfigBuilder withServers(dynamic room, List<ServerMod> globalServers) {
+    // 局域网模式：跳过所有服务器
+    if (room is Room && room.isLanMode) {
+      _serverUrls = [];
+      _log('🏠 局域网模式 (无公共服务器)');
+      return this;
+    }
     final enabledUrls = _expandServerUrls(
       globalServers.where((s) => s.enable),
     );

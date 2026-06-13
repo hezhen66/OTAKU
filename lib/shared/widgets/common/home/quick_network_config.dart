@@ -31,217 +31,35 @@ class QuickNetworkConfig extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.tune, color: colorScheme.primary, size: 22),
+                Container(width: 3, height: 18, color: const Color(0xFF00E5FF)),
                 const SizedBox(width: 8),
-                const Text(
-                  '快捷网络配置',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),
-                ),
+                const Text('快捷网络配置',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.white)),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
 
             // 强制中转开关
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color:
-                          disableP2p
-                              ? colorScheme.primaryContainer
-                              : colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.route,
-                      size: 20,
-                      color:
-                          disableP2p
-                              ? colorScheme.onPrimaryContainer
-                              : colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '强制中转',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '禁用P2P直连，所有流量经服务器中转',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colorScheme.onSurface.withValues(alpha: 0.6),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Switch(
-                    value: disableP2p,
-                    onChanged: (value) {
-                      services.networkConfig.updateDisableP2p(value);
-                    },
-                  ),
-                ],
-              ),
+            _buildSwitchRow(
+              icon: Icons.route, label: '强制中转',
+              desc: '禁用P2P直连，所有流量经服务器中转',
+              value: disableP2p,
+              onChanged: (v) => services.networkConfig.updateDisableP2p(v),
             ),
-
-            // 防火墙开关（仅Windows）
             if (Platform.isWindows) ...[
-              const SizedBox(height: 8),
-              // 广播转发开关（仅Windows）
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: enableUdpBroadcastRelay
-                            ? colorScheme.primaryContainer
-                            : colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.settings_input_antenna,
-                        size: 20,
-                        color: enableUdpBroadcastRelay
-                            ? colorScheme.onPrimaryContainer
-                            : colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '广播转发',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Windows：将局域网 UDP 广播转发到虚拟网（通常需管理员权限）',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.onSurface.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Switch(
-                      value: enableUdpBroadcastRelay,
-                      onChanged: (value) {
-                        services.networkConfig.updateEnableUdpBroadcastRelay(
-                          value,
-                        );
-                      },
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 6),
+              _buildSwitchRow(
+                icon: Icons.settings_input_antenna, label: '广播转发',
+                desc: 'Windows：将局域网 UDP 广播转发到虚拟网',
+                value: enableUdpBroadcastRelay,
+                onChanged: (v) => services.networkConfig.updateEnableUdpBroadcastRelay(v),
               ),
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: colorScheme.outline.withValues(alpha: 0.2),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color:
-                            firewallStatus
-                                ? colorScheme.primaryContainer
-                                : colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.shield,
-                        size: 20,
-                        color:
-                            firewallStatus
-                                ? colorScheme.onPrimaryContainer
-                                : colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            LocaleKeys.firewall.tr(),
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
-                              color: colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            firewallStatus
-                                ? LocaleKeys.firewall_enabled.tr()
-                                : LocaleKeys.firewall_disabled.tr(),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: colorScheme.onSurface.withValues(alpha: 0.6),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Switch(
-                      value: firewallStatus,
-                      onChanged: (value) {
-                        services.firewall.setFirewall(value);
-                      },
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 6),
+              _buildSwitchRow(
+                icon: Icons.shield, label: LocaleKeys.firewall.tr(),
+                desc: firewallStatus ? LocaleKeys.firewall_enabled.tr() : LocaleKeys.firewall_disabled.tr(),
+                value: firewallStatus,
+                onChanged: (v) => services.firewall.setFirewall(v),
               ),
             ],
           ],
@@ -249,4 +67,30 @@ class QuickNetworkConfig extends StatelessWidget {
       );
     });
   }
+}
+
+Widget _buildSwitchRow({
+  required IconData icon, required String label, required String desc,
+  required bool value, required ValueChanged<bool> onChanged,
+}) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+    decoration: BoxDecoration(
+      color: Colors.black.withValues(alpha: 0.15),
+      border: Border.all(color: const Color(0xFF00E5FF).withValues(alpha: 0.2), width: 0.8),
+    ),
+    child: Row(children: [
+      Icon(icon, size: 18, color: value ? const Color(0xFF00E5FF) : Colors.white38),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.white)),
+          const SizedBox(height: 1),
+          Text(desc, style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.5))),
+        ]),
+      ),
+      const SizedBox(width: 4),
+      Switch(overlayColor: WidgetStateProperty.all(Colors.transparent), value: value, onChanged: onChanged),
+    ]),
+  );
 }

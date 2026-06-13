@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'package:astral/core/services/service_manager.dart';
+import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:astral/generated/locale_keys.g.dart';
 import 'package:astral/features/settings/pages/general/logs_page.dart';
 import 'package:astral/shared/utils/helpers/update_helper.dart';
 import 'package:astral/core/ui/base_settings_page.dart';
+import 'package:signals_flutter/signals_flutter.dart';
 
 class AboutPage extends BaseSettingsPage {
   const AboutPage({super.key});
@@ -27,17 +29,10 @@ class AboutPage extends BaseSettingsPage {
             ),
             const SizedBox(height: 16),
             Text(
-              'Astral',
+              'OTAKU',
               style: Theme.of(
                 context,
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Version ${AppInfoUtil.getVersion()}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.outline,
-              ),
             ),
             const SizedBox(height: 20),
           ],
@@ -46,6 +41,8 @@ class AboutPage extends BaseSettingsPage {
         buildSettingsCard(
           context: context,
           children: [
+            _buildYukiSwitch(context),
+            buildDivider(),
             ListTile(
               leading: Hero(tag: "logs_hero", child: const Icon(Icons.article)),
               title: Text(LocaleKeys.view_logs.tr()),
@@ -65,6 +62,24 @@ class AboutPage extends BaseSettingsPage {
         ),
       ],
     );
+  }
+
+  Widget _buildYukiSwitch(BuildContext context) {
+    return Watch((_) {
+      final enabled = ServiceManager().uiState.isSnowEnabled.value;
+      return ListTile(
+        leading: const Icon(Icons.ac_unit),
+        title: const Text('YUKI', style: TextStyle(
+          fontSize: 14, fontWeight: FontWeight.bold,
+          letterSpacing: 2, decoration: TextDecoration.none,
+        )),
+        trailing: Switch(
+          value: enabled,
+          activeColor: Theme.of(context).colorScheme.primary,
+          onChanged: (v) => ServiceManager().uiState.setSnowEnabled(v),
+        ),
+      );
+    });
   }
 
   void _navigateToLogs(BuildContext context) {

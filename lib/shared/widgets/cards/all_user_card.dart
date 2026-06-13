@@ -1,4 +1,6 @@
-﻿import 'package:astral/core/services/service_manager.dart';
+﻿import 'package:astral/shared/theme/app_theme.dart';
+import 'package:astral/shared/widgets/hud/frosted_glass.dart';
+import 'package:astral/core/services/service_manager.dart';
 import 'package:astral/src/rust/api/simple.dart';
 import 'package:astral/shared/utils/helpers/platform_version_parser.dart';
 import 'package:flutter/material.dart';
@@ -607,44 +609,34 @@ class _AllUserCardState extends State<AllUserCard> {
       return MouseRegion(
         onEnter: (_) => setState(() => isHovered = true),
         onExit: (_) => setState(() => isHovered = false),
-        child: Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-            side: BorderSide(
-              color:
-                  isHovered ? widget.colorScheme.primary : Colors.transparent,
-              width: 1,
-            ),
-          ),
-          child: InkWell(
-            onTap: () {
-              // 复制IP地址到剪贴板
-              Clipboard.setData(ClipboardData(text: widget.player.ipv4));
-              // 显示复制成功提示
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('已复制IP: ${widget.player.ipv4}'),
-                  duration: const Duration(seconds: 2),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            splashColor: widget.colorScheme.primary.withValues(alpha: 0.3),
-            highlightColor: widget.colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-            child: Container(
-              padding: EdgeInsets.all(12),
-              width: double.infinity,
-              child: _buildDesktopPlayerListItem(
-                widget.player,
-                widget.colorScheme,
-                _getLatencyColor(widget.player.latencyMs),
-                _getConnectionIcon(
-                  _mapConnectionType(
-                    widget.player.cost,
-                    widget.player.ipv4,
-                    localIPv4,
-                  ),
+        child: FrostedGlassPanel(
+          padding: const EdgeInsets.all(12),
+          borderColor:
+              isHovered ? AppTheme.primary : AppTheme.glassBorder,
+          showGlow: isHovered,
+          glowColor: AppTheme.primary,
+          borderRadius: AppTheme.panelRadius,
+          onTap: () {
+            Clipboard.setData(ClipboardData(text: widget.player.ipv4));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('已复制IP: ${widget.player.ipv4}'),
+                duration: const Duration(seconds: 2),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          },
+          child: SizedBox(
+            width: double.infinity,
+            child: _buildDesktopPlayerListItem(
+              widget.player,
+              widget.colorScheme,
+              _getLatencyColor(widget.player.latencyMs),
+              _getConnectionIcon(
+                _mapConnectionType(
+                  widget.player.cost,
+                  widget.player.ipv4,
+                  localIPv4,
                 ),
               ),
             ),
